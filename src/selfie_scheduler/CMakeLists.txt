@@ -205,3 +205,8 @@ file(GLOB CLIENTS "src/clients/*.cpp")
 add_executable(scheduler src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
 target_link_libraries(scheduler ${catkin_LIBRARIES})
 add_dependencies(scheduler ${catkin_EXPORTED_TARGETS})
+
+
+add_executable(action_mock src/action_mock.cpp)
+target_link_libraries(action_mock ${catkin_LIBRARIES})
+add_dependencies(action_mock ${catkin_EXPORTED_TARGETS})

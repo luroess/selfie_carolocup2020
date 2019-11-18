@@ -33,9 +33,23 @@ protected:
   //publishers
   ros::Publisher drive_pub_;
 
-  int button_status_ = 0;
-  float covered_distance_ = 0.0;
-  float distance_base_;
+  int button_status_;
+private:
+  enum class State
+  {
+    IDLE,
+    WAIT_BUTTON,
+    WAIT_START,
+    START_MOVE,
+    END_MOVE
+  } state_;
+
+  float distanceGoal_;
+  float startingDistance_;
+  float distanceRead_;
+
+  ros::Time minSecondPressTime_;
+  ros::Duration debounceDuration_;
 
 public:
 

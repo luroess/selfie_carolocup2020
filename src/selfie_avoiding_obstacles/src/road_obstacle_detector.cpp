@@ -140,18 +140,18 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
   for (int box_nr = msg.polygons.size() - 1; box_nr >= 0; box_nr--)
   {
     polygon = msg.polygons[box_nr];
-    bool box_ok = false;
+    int box_ok = 0;
     for (int a = 0; a < 4; ++a)
     {
       Point p(polygon.points[a]);
 
       if (is_on_right_lane(p) && p.check_position(ROI_min_x_, ROI_max_x_, ROI_min_y_, ROI_max_y_))
       {
-        box_ok = true;
+        box_ok++;
         break;
       }
     }
-    if (box_ok)
+    if (box_ok >= 2)
     {
       Box temp_box(polygon);
       filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);

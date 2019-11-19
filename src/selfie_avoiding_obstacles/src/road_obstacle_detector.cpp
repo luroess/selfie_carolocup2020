@@ -10,6 +10,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , pnh_(pnh)
     , received_road_markings_(false)
     , maximum_distance_to_obstacle_(0.5)
+    , found_obstacles_in_a_row_(0)
 {
   pnh_.param<bool>("visualization", visualization_, false);
   pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
@@ -23,13 +24,13 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("maximum_speed", max_speed_, 0.3);
   pnh_.param<float>("safe_speed", safe_speed_, 0.1);
   pnh_.param<float>("safety_margin", safety_margin_, 1.15);
-  
+
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
   active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
   reset_node_service_ = nh_.advertiseService("/resetLaneControl", &Road_obstacle_detector::reset_node, this);
   setpoint_pub_ = nh_.advertise<std_msgs::Float64>("/setpoint", 1);
   speed_pub_ = nh_.advertise<std_msgs::Float64>("/max_speed", 1);
-  
+
   speed_message_.data = max_speed_;
 
   if (visualization_)
@@ -68,9 +69,35 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
       speed_message_.data = safe_speed_;
       if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_)
       {
-        change_lane(left_lane_);
-        calculate_return_distance();
-        status_ = OVERTAKING;
+        if (found_obstacles_in_a_row_ >= 3)
+        {
+          change_lane(left_lane_);
+          calculate_return_distance();
+          status_ = OVERTAKING;
+          found_obstacles_in_a_row_ = 0;
+        } else if (found_obstacles_in_a_row_ == 0)
+        {
+          middle_of_last_obstacle_ =
+              Point((nearest_box_in_front_of_car_->bottom_left.x + nearest_box_in_front_of_car_->bottom_right.x) / 2,
+                    (nearest_box_in_front_of_car_->bottom_left.y + nearest_box_in_front_of_car_->bottom_right.y) / 2);
+        } else
+        {
+          double xDiff, yDiff;
+          xDiff = (nearest_box_in_front_of_car_->bottom_left.x + nearest_box_in_front_of_car_->bottom_right.x) / 2 -
+                  middle_of_last_obstacle_.x;
+          xDiff = abs(xDiff);
+          yDiff = (nearest_box_in_front_of_car_->bottom_left.y + nearest_box_in_front_of_car_->bottom_right.y) / 2 -
+                  middle_of_last_obstacle_.y;
+          xDiff = abs(yDiff);
+          double tolerance = 0.07;
+          if (xDiff < tolerance && yDiff < tolerance)
+          {
+            found_obstacles_in_a_row_++;
+            middle_of_last_obstacle_ =
+                Point((nearest_box_in_front_of_car_->bottom_left.x + nearest_box_in_front_of_car_->bottom_right.x) / 2,
+                      (nearest_box_in_front_of_car_->bottom_left.y + nearest_box_in_front_of_car_->bottom_right.y) / 2);
+          }
+        }
       } else
       {
         setpoint_value_.data = right_lane_;

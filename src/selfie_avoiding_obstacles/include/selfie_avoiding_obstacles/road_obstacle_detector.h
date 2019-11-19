@@ -52,6 +52,9 @@ private:
   float center_line_[4];
   float right_line_[4];
 
+  int found_obstacles_in_a_row_;
+  Point middle_of_last_obstacle_;
+
   // area of interest (camera's field of view)
   float ROI_min_x_;
   float ROI_max_x_;

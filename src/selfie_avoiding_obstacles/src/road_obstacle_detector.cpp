@@ -75,35 +75,18 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
           calculate_return_distance();
           status_ = OVERTAKING;
           found_obstacles_in_a_row_ = 0;
-        } else if (found_obstacles_in_a_row_ == 0)
-        {
-          middle_of_last_obstacle_ =
-              Point((nearest_box_in_front_of_car_->bottom_left.x + nearest_box_in_front_of_car_->bottom_right.x) / 2,
-                    (nearest_box_in_front_of_car_->bottom_left.y + nearest_box_in_front_of_car_->bottom_right.y) / 2);
         } else
         {
-          double xDiff, yDiff;
-          xDiff = (nearest_box_in_front_of_car_->bottom_left.x + nearest_box_in_front_of_car_->bottom_right.x) / 2 -
-                  middle_of_last_obstacle_.x;
-          xDiff = abs(xDiff);
-          yDiff = (nearest_box_in_front_of_car_->bottom_left.y + nearest_box_in_front_of_car_->bottom_right.y) / 2 -
-                  middle_of_last_obstacle_.y;
-          xDiff = abs(yDiff);
-          double tolerance = 0.07;
-          if (xDiff < tolerance && yDiff < tolerance)
-          {
-            found_obstacles_in_a_row_++;
-            middle_of_last_obstacle_ =
-                Point((nearest_box_in_front_of_car_->bottom_left.x + nearest_box_in_front_of_car_->bottom_right.x) / 2,
-                      (nearest_box_in_front_of_car_->bottom_left.y + nearest_box_in_front_of_car_->bottom_right.y) / 2);
-          }
+          found_obstacles_in_a_row_++;
         }
       } else
       {
+
         setpoint_value_.data = right_lane_;
       }
     } else
     {
+      found_obstacles_in_a_row_ = 0;
       setpoint_value_.data = right_lane_;
       speed_message_.data = max_speed_;
     }
@@ -148,7 +131,6 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
       if (is_on_right_lane(p) && p.check_position(ROI_min_x_, ROI_max_x_, ROI_min_y_, ROI_max_y_))
       {
         box_ok++;
-        break;
       }
     }
     if (box_ok >= 2)

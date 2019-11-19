@@ -52,7 +52,9 @@ private:
   float point_max_x_;
   float point_min_y_;
   float point_max_y_;
-  
+
+  int found_obstacles_in_a_row_;
+  Point middle_of_last_obstacle_;
 
   float maximum_distance_to_obstacle_; // to avoid changing lane too early
   float maximum_length_of_obstacle_;

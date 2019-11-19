@@ -12,6 +12,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
     , is_time_calculated_for_overtake_(false)
     , received_road_markings_(false)
     , maximum_distance_to_obstacle_(0.5)
+    , found_obstacles_in_a_row_(0)
 {
   pnh_.param<bool>("visualization", visualization_, false);
   pnh_.param<float>("maximum_length_of_obstacle", maximum_length_of_obstacle_, 0.8);
@@ -42,9 +43,36 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     if (!filtered_boxes_.empty())
       if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_)
       {
-        change_lane(LEFT);
-        status_ = OVERTAKING;
-        speed_sub_ = nh_.subscribe("/speed", 1, &Road_obstacle_detector::calculate_overtake_time, this);
+        if (found_obstacles_in_a_row_ >= 3)
+        {
+
+          change_lane(LEFT);
+          status_ = OVERTAKING;
+          speed_sub_ = nh_.subscribe("/speed", 1, &Road_obstacle_detector::calculate_overtake_time, this);
+          found_obstacles_in_a_row_ = 0;
+        } else if (found_obstacles_in_a_row_ == 0)
+        {
+          middle_of_last_obstacle_ =
+              Point((nearest_box_in_front_of_car_->bottom_left.x + nearest_box_in_front_of_car_->bottom_right.x) / 2,
+                    (nearest_box_in_front_of_car_->bottom_left.y + nearest_box_in_front_of_car_->bottom_right.y) / 2);
+        } else
+        {
+          double xDiff, yDiff;
+          xDiff = (nearest_box_in_front_of_car_->bottom_left.x + nearest_box_in_front_of_car_->bottom_right.x) / 2 -
+                  middle_of_last_obstacle_.x;
+          xDiff = abs(xDiff);
+          yDiff = (nearest_box_in_front_of_car_->bottom_left.y + nearest_box_in_front_of_car_->bottom_right.y) / 2 -
+                  middle_of_last_obstacle_.y;
+          xDiff = abs(yDiff);
+          double tolerance = 0.07;
+          if (xDiff < tolerance && yDiff < tolerance)
+          {
+            found_obstacles_in_a_row_++;
+            middle_of_last_obstacle_ =
+                Point((nearest_box_in_front_of_car_->bottom_left.x + nearest_box_in_front_of_car_->bottom_right.x) / 2,
+                      (nearest_box_in_front_of_car_->bottom_left.y + nearest_box_in_front_of_car_->bottom_right.y) / 2);
+          }
+        }
       }
     break;
   case OVERTAKING:

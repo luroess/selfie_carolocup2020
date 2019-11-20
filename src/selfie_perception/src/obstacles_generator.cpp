@@ -38,7 +38,7 @@ bool ObstaclesGenerator::init()
 
   pnh_.getParam("segment_threshold", segment_threshold_);
   pnh_.getParam("min_segment_size", min_segment_size_);
-  pnh_.getParam("max_segment_size", min_segment_size_);
+  pnh_.getParam("max_segment_size", max_segment_size_);
   pnh_.getParam("min_to_divide", min_to_divide_);
 
   pnh_.getParam("lidar_offset", lidar_offset_);

@@ -67,7 +67,8 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
     if (!filtered_boxes_.empty())
     {
       speed_message_.data = safe_speed_;
-      if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_)
+      if (nearest_box_in_front_of_car_->bottom_left.x <= maximum_distance_to_obstacle_ ||
+          nearest_box_in_front_of_car_->bottom_right.x <= maximum_distance_to_obstacle_)
       {
         if (found_obstacles_in_a_row_ >= 3)
         {
@@ -133,7 +134,7 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
         box_ok++;
       }
     }
-    if (box_ok >= 2)
+    if (box_ok >= 3)
     {
       Box temp_box(polygon);
       filtered_boxes_.insert(filtered_boxes_.begin(), temp_box);

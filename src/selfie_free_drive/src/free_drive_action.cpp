@@ -90,7 +90,7 @@ void FreeDriveAction::executeLoop()
 
     if (goal_.mode == 0)
     {
-      maxSpeedPub();
+      //maxSpeedPub();
     }
 
     if(!as_.isActive())

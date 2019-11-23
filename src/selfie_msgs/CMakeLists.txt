@@ -52,6 +52,7 @@ add_message_files(
   ParkingInfo.msg
   PolygonArray.msg
   RoadMarkings.msg
+  Log.msg
 )
 
 ## Generate services in the 'srv' folder

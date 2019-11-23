@@ -3,7 +3,9 @@
 #include <selfie_scheduler/drive_action_client.h>
 #include <selfie_scheduler/search_action_client.h>
 #include <selfie_scheduler/park_action_client.h>
+#include <selfie_log/selfie_log.h>
 #include <std_srvs/Empty.h>
+#include <selfie_log/selfie_logConfig.h>
 
 Scheduler::Scheduler() :
     pnh_("~"),
@@ -21,6 +23,8 @@ Scheduler::Scheduler() :
     cmdCreatorStartPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_start_pub");
     cmdCreatorStopPub_ = nh_.serviceClient<std_srvs::Empty>("cmd_stop_pub");
     switchState_ = nh_.subscribe("switch_state", 10, &Scheduler::switchStateCallback, this);
+    log=nh_.subscribe("log_msg",10, &Scheduler::logCB, this);
+
 
     clients_[STARTING] = new StartingProcedureClient("starting_procedure");
     action_args_[STARTING] = start_distance_;
@@ -37,7 +41,7 @@ Scheduler::Scheduler() :
     previousRcState_ = RC_MANUAL;
     previous_car_state_= SELFIE_IDLE;
     current_car_state_ = SELFIE_READY;
-
+    log_var_ = true;
     ROS_INFO("Clients created successfully");
 }
 Scheduler::~Scheduler()
@@ -71,6 +75,7 @@ int Scheduler::checkIfActionFinished()
 }
 void Scheduler::loop()
 {
+    SELFIE_LOG(log_var_,"wiadomosc");
     if (checkIfActionFinished() == 1)
     {
         current_client_ptr_->getActionResult(action_args_[current_client_ptr_->getNextAction()]);
@@ -173,6 +178,10 @@ void Scheduler::stopAction()
 {
     current_client_ptr_->cancelAction();
     ROS_INFO("STOP current action");
+}
+void Scheduler::logCB(const selfie_msgs::LogConstPtr &msg)
+{
+    log_var_ = msg->scheduler_node;
 }
 void Scheduler::switchStateCallback(const std_msgs::UInt8ConstPtr &msg)
 {

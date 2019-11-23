@@ -1,24 +1,20 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(selfie_scheduler)
-
+project(selfie_log)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++17)
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roslint
-  actionlib
+  dynamic_reconfigure
   roscpp
-  std_msgs
-  selfie_msgs
-  selfie_log
+  rospy
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+# find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -74,7 +70,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -92,10 +88,9 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+   cfg/LogConfig.cfg
+   )
 
 ###################################
 ## catkin specific configuration ##
@@ -107,9 +102,9 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-   INCLUDE_DIRS include
-#  LIBRARIES selfie_scheduler
-#  CATKIN_DEPENDS actionlib roscpp std_msgs
+  INCLUDE_DIRS include
+#  LIBRARIES selfie_log
+#  CATKIN_DEPENDS dynamic_reconfigure roscpp rospy
 #  DEPENDS system_lib
 )
 
@@ -120,15 +115,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
+# include
   ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${selfie_log_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/selfie_scheduler.cpp
+#   src/${PROJECT_NAME}/selfie_log.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -139,7 +132,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/selfie_scheduler_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/selfie_log_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -169,7 +162,11 @@ include_directories(
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
-
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
 ## Mark executables and/or libraries for installation
 # install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -178,11 +175,11 @@ include_directories(
 # )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
-)
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -196,21 +193,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_scheduler.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_selfie_log.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-
-file(GLOB CLIENTS "src/clients/*.cpp")
-add_executable(scheduler src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
-roslint_cpp(src/scheduler_node.cpp src/scheduler.cpp ${CLIENTS})
-target_link_libraries(scheduler ${catkin_LIBRARIES})
-add_dependencies(scheduler ${catkin_EXPORTED_TARGETS})
-
-
-add_executable(action_mock test/action_mock.cpp)
-target_link_libraries(action_mock ${catkin_LIBRARIES})
-add_dependencies(action_mock ${catkin_EXPORTED_TARGETS})
+#add_dependencies(selfie_log ${PROJECT_NAME}_gencfg)

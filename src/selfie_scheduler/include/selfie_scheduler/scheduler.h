@@ -5,6 +5,7 @@
 #include <selfie_scheduler/client_interface.h>
 #include <boost/any.hpp>
 #include <std_msgs/UInt8.h>
+#include <selfie_msgs/Log.h>
 
 /*
 
@@ -19,7 +20,7 @@ class Scheduler
 {
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
-
+    bool log_var_;
     //params
     int begin_action_;
     float start_distance_;
@@ -38,9 +39,10 @@ class Scheduler
     ros::ServiceClient cmdCreatorStopPub_;
 
     ros::Subscriber switchState_;
+    ros::Subscriber log;
     rc_state previousRcState_;
     void switchStateCallback(const std_msgs::UInt8ConstPtr &msg);
-
+    void logCB(const selfie_msgs::LogConstPtr &msg);
     template <typename T> bool checkCurrentClientType();
     void stateMachine();
     void startAction(action action_to_set);

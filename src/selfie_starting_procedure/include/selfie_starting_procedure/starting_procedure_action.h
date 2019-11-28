@@ -7,6 +7,8 @@
 #include <string>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Empty.h>
+
 #include <selfie_scheduler/scheduler_enums.h>
 #include <ackermann_msgs/AckermannDriveStamped.h>
 
@@ -16,18 +18,21 @@ protected:
 
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
-  actionlib::SimpleActionServer<selfie_msgs::startingAction> as_; // NodeHandle instance must be created before this line. Otherwise strange error occurs.
-  std::string action_name_;
+  actionlib::SimpleActionServer<selfie_msgs::startingAction> as_;
 
   //params
   float starting_speed_;
+  bool use_scan_;
+  bool use_qr_;
 
   //create messages that are used to published feedback/result
+  selfie_msgs::startingGoal goal_;
   selfie_msgs::startingFeedback feedback_;
   selfie_msgs::startingResult result_;
 
   //subscribers
-  ros::Subscriber button_sub_;
+  ros::Subscriber parking_button_sub_;
+  ros::Subscriber obstacle_button_sub_;
   ros::Subscriber distance_sub_;
 
   //publishers
@@ -51,17 +56,20 @@ private:
   ros::Time minSecondPressTime_;
   ros::Duration debounceDuration_;
 
-public:
-
-  StartingProcedureAction(std::string name);
-  ~StartingProcedureAction(void);
-
   void publishFeedback(feedback_variable program_state);
 
-  void driveBoxOut(float speed);
   void executeCB(const selfie_msgs::startingGoalConstPtr &goal);
   void preemptCB();
-  void buttonCB(const std_msgs::BoolConstPtr &msg);
+  void driveBoxOut(float speed);
+  void parking_buttonCB(const std_msgs::Empty &msg);
+  void obstacle_buttonCB(const std_msgs::Empty &msg);
   void distanceCB(const std_msgs::Float32ConstPtr &msg);
+
+
+public:
+
+  StartingProcedureAction(const ros::NodeHandle &nh, const ros::NodeHandle &pnh);
+  ~StartingProcedureAction(void);
+
 };
 #endif // STARTING_PROCEDURE_ACTION_H

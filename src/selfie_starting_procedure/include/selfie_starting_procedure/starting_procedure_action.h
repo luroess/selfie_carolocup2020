@@ -8,6 +8,7 @@
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Empty.h>
+#include <std_srvs/Empty.h>
 
 #include <selfie_scheduler/scheduler_enums.h>
 #include <ackermann_msgs/AckermannDriveStamped.h>
@@ -34,11 +35,13 @@ protected:
   ros::Subscriber parking_button_sub_;
   ros::Subscriber obstacle_button_sub_;
   ros::Subscriber distance_sub_;
+  ros::Subscriber qrSub_;
+  ros::ServiceClient qrClient_;
 
   //publishers
   ros::Publisher drive_pub_;
 
-  int button_status_;
+  feedback_variable button_status_;
 private:
   enum class State
   {
@@ -58,12 +61,13 @@ private:
 
   void publishFeedback(feedback_variable program_state);
 
-  void executeCB(const selfie_msgs::startingGoalConstPtr &goal);
+  void executeCB();
   void preemptCB();
   void driveBoxOut(float speed);
   void parking_buttonCB(const std_msgs::Empty &msg);
   void obstacle_buttonCB(const std_msgs::Empty &msg);
   void distanceCB(const std_msgs::Float32ConstPtr &msg);
+  void gateOpenCB(const std_msgs::Empty &msg);
 
 
 public:

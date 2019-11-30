@@ -11,9 +11,9 @@
 #include <geometry_msgs/PolygonStamped.h>
 #include <selfie_msgs/PolygonArray.h>
 #include <selfie_msgs/RoadMarkings.h>
+#include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
-#include <std_msgs/Bool.h>
 #include <std_srvs/Empty.h>
 #include <visualization_msgs/Marker.h>
 
@@ -112,6 +112,7 @@ private:
   void blinkRight(bool on);
 
   bool is_on_right_lane(const Point &);
+  bool is_on_left_lane(const Point &);
   void passive_timer_cb(const ros::TimerEvent &);
 
   void visualizeBoxes();

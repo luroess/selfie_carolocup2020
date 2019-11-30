@@ -33,7 +33,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   pnh_.param<float>("pos_tolerance", pos_tolerance_, 0.01);
   pnh_.param<int>("num_proof_to_overtake", num_proof_to_overtake_, 3);
   pnh_.param<int>("num_corners_to_detect", num_corners_to_detect_, 3);
-  
+
   passive_mode_service_ = nh_.advertiseService("/avoiding_obst_set_passive", &Road_obstacle_detector::switchToPassive, this);
   active_mode_service_ = nh_.advertiseService("/avoiding_obst_set_active", &Road_obstacle_detector::switchToActive, this);
   reset_node_service_ = nh_.advertiseService("/resetLaneControl", &Road_obstacle_detector::reset_node, this);
@@ -41,7 +41,7 @@ Road_obstacle_detector::Road_obstacle_detector(const ros::NodeHandle &nh, const 
   speed_pub_ = nh_.advertise<std_msgs::Float64>("/max_speed", 1);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
-  
+
   speed_message_.data = max_speed_;
 
   if (visualization_)
@@ -82,9 +82,16 @@ void Road_obstacle_detector::obstacle_callback(const selfie_msgs::PolygonArray &
         ++proof_overtake_;
         if (proof_overtake_ >= num_proof_to_overtake_)
         {
-          proof_overtake_ = 0;
-          calculate_return_distance();
-          status_ = OVERTAKE;
+          if (status_ != ON_LEFT)
+          {
+            proof_overtake_ = 0;
+            calculate_return_distance();
+            status_ = OVERTAKE;
+          } else
+          {
+            status_ = RETURN;
+            ROS_INFO("Earlier returning to right lane caused by obstacle on left lane");
+          }
         }
       } else
       {
@@ -154,10 +161,18 @@ void Road_obstacle_detector::filter_boxes(const selfie_msgs::PolygonArray &msg)
       for (int a = 0; a < 4; ++a)
       {
         Point p(polygon.points[a]);
-
-        if (is_on_right_lane(p) && p.check_position(ROI_min_x_, ROI_max_x_, ROI_min_y_, ROI_max_y_))
+        if (status_ != ON_LEFT)
         {
-          ++corners_ok;
+          if (is_on_right_lane(p) && p.check_position(ROI_min_x_, ROI_max_x_, ROI_min_y_, ROI_max_y_))
+          {
+            ++corners_ok;
+          }
+        } else
+        {
+          if (is_on_left_lane(p) && p.check_position(ROI_min_x_, ROI_max_x_, ROI_min_y_, ROI_max_y_))
+          {
+            ++corners_ok;
+          }
         }
       }
       if (corners_ok >= num_corners_to_detect_)
@@ -213,6 +228,22 @@ bool Road_obstacle_detector::is_on_right_lane(const Point &point)
     return false;
 }
 
+bool Road_obstacle_detector::is_on_left_lane(const Point &point)
+{
+  if (received_road_markings_ == false)
+    return false;
+
+  float left_value = left_line_[0] + point.x * left_line_[1] + point.x * point.x * left_line_[2] +
+                     point.x * point.x * point.x * left_line_[3];
+  float center_value = center_line_[0] + point.x * center_line_[1] + point.x * point.x * center_line_[2] +
+                       point.x * point.x * point.x * center_line_[3];
+
+  if (point.y < left_value && point.y > center_value)
+    return true;
+  else
+    return false;
+}
+
 void Road_obstacle_detector::calculate_return_distance()
 {
   return_distance_calculated_ = true;
@@ -252,8 +283,7 @@ void Road_obstacle_detector::posOffsetCallback(const std_msgs::Float64 &msg)
     blinkLeft(false);
     selfie_msgs::PolygonArray temp;
     obstacle_callback(temp);
-  }
-  else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
+  } else if (status_ == RETURN && current_offset_ < right_lane_ + pos_tolerance_)
   {
     status_ = ON_RIGHT;
     blinkRight(false);

@@ -19,7 +19,7 @@ detect_parking_spot:
     point_max_x: 2,
     point_max_y: 0.2,
     point_min_x: 0.01,
-    point_min_y: -1
+    point_min_y: -0.5
   }
 extract_road_features: 
   {
@@ -65,7 +65,7 @@ offset_combiner:
   }
 park_server: 
   {
-    dist_turn: 0.03,
+    dist_turn: 0.17,
     idle_time: 2.0,
     max_rot: 0.8,
     max_turn: 0.8,

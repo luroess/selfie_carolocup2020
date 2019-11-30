@@ -122,8 +122,8 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         break;
     }
 
-    feedback.action_status = action_status_;
-    as_.publishFeedback(feedback);
+    // feedback.action_status = action_status_;
+    // as_.publishFeedback(feedback);
   }
   else
   {

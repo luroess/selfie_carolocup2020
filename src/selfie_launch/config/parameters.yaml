@@ -65,7 +65,7 @@ offset_combiner:
   }
 park_server: 
   {
-    dist_turn: 0.17,
+    dist_turn: 0.03,
     idle_time: 2.0,
     max_rot: 0.8,
     max_turn: 0.8,

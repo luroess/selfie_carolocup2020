@@ -189,7 +189,6 @@ void ParkService::goalCB()
 void ParkService::preemptCB()
 {
   ROS_INFO("parkService preempted");
-  odom_sub_.shutdown();
   blinkLeft(false);
   blinkRight(false);
   parking_state_ = not_parking;

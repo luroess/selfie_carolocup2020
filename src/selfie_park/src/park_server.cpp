@@ -165,6 +165,7 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
   front_wall_ = tr.x() < br.x() ? tr.x() : br.x();
   middle_of_parking_spot_x_ = (front_wall_ - back_wall_) / 2.0;
   mid_y_ = middle_of_parking_spot_y_ + (leaving_target_ - middle_of_parking_spot_y_) / 2.0;
+  ROS_INFO("got goal, back wall %.3f, actual parking x %.3f, start park %.3f",back_wall_, actual_parking_position_.x_, back_wall_ + minimal_start_parking_x_);
 }
 
 void ParkService::goalCB()
@@ -199,6 +200,7 @@ void ParkService::drive(float speed, float steering_angle)
 
 bool ParkService::toParkingSpot()
 {
+  ROS_INFO("parking position x $.3f, back_wall %.3f", actual_parking_position_.x_, back_wall_);
   if (actual_parking_position_.x_ < back_wall_ + minimal_start_parking_x_)
   {
     drive(parking_speed_, 0.0);

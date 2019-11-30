@@ -22,6 +22,13 @@ as_(nh_, "park", false)
   pnh_.param<float>("odom_to_back", odom_to_back_, -0.33);
   pnh_.param<float>("max_turn", max_turn_, 0.8);
   pnh_.param<float>("idle_time", idle_time_, 2.);
+
+  actual_odom_position_ = Position(0,0,0);
+  actual_parking_position_ = Position(0,0,0);
+  parking_spot_position_ = Position(0,0,0);
+  actual_laser_odom_position_ = Position(0,0,0);
+  actual_back_parking_position_ = Position(0,0,0);
+  actual_front_parking_position_  = Position(0,0,0);
   move_state_ = first_phase;
   parking_state_ = not_parking;
   action_status_ = READY_TO_DRIVE;
@@ -147,6 +154,7 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
 
   parking_spot_position_ = Position(bl.x(), bl.y(), atan2(br.y() - bl.y(), br.x() - bl.x()));
   actual_parking_position_ = Position(parking_spot_position_.transform_.inverse() * actual_odom_position_.transform_);
+  //  Position(parking_spot_position_.transform_.inverse() * actual_odom_position_.transform_);
   Position actual_laser_parking_position = Position(actual_parking_position_, odom_to_laser_);
   std::vector <tf::Vector3> parking_parking_spot;
   for (std::vector<geometry_msgs::Point32>::const_iterator it = msg.points.begin(); it < msg.points.end(); it++)
@@ -165,6 +173,7 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
   front_wall_ = tr.x() < br.x() ? tr.x() : br.x();
   middle_of_parking_spot_x_ = (front_wall_ - back_wall_) / 2.0;
   mid_y_ = middle_of_parking_spot_y_ + (leaving_target_ - middle_of_parking_spot_y_) / 2.0;
+  ROS_INFO("parking spot x %.3f, odom position %.3f",parking_spot_position_.x_, actual_odom_position_.x_);
   ROS_INFO("got goal, back wall %.3f, actual parking x %.3f, start park %.3f",back_wall_, actual_parking_position_.x_, back_wall_ + minimal_start_parking_x_);
 }
 
@@ -200,7 +209,8 @@ void ParkService::drive(float speed, float steering_angle)
 
 bool ParkService::toParkingSpot()
 {
-  ROS_INFO("parking position x $.3f, back_wall %.3f", actual_parking_position_.x_, back_wall_);
+  ROS_INFO("parking spot x %.3f, odom position x %.3f",parking_spot_position_.x_, actual_odom_position_.x_);
+  ROS_INFO("parking position x %.3f, back_wall %.3f", actual_parking_position_.x_, back_wall_);
   if (actual_parking_position_.x_ < back_wall_ + minimal_start_parking_x_)
   {
     drive(parking_speed_, 0.0);

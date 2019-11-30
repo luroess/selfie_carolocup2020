@@ -32,12 +32,14 @@ as_(nh_, "park", false)
   move_state_ = first_phase;
   parking_state_ = not_parking;
   action_status_ = READY_TO_DRIVE;
+  odom_sub_ = nh_.subscribe(odom_topic_, 10, &ParkService::odomCallback, this);
   as_.registerGoalCallback(boost::bind(&ParkService::goalCB, this));
   as_.registerPreemptCallback(boost::bind(&ParkService::preemptCB, this));
   as_.start();
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
+
 }
 
 void ParkService::odomCallback(const nav_msgs::Odometry &msg)
@@ -181,7 +183,6 @@ void ParkService::goalCB()
 {
   selfie_msgs::parkGoal goal = *as_.acceptNewGoal();
   initParkingSpot(goal.parking_spot);
-  odom_sub_ = nh_.subscribe(odom_topic_, 10, &ParkService::odomCallback, this);
   parking_state_ = go_to_parking_spot;
 }
 

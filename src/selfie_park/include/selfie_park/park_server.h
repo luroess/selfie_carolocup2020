@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <selfie_scheduler/scheduler_enums.h>
+#include <visualization_msgs/Marker.h>
 
 
 class ParkService
@@ -30,6 +31,8 @@ private:
   ros::Publisher ackermann_pub_;
   ros::Publisher right_indicator_pub_;
   ros::Publisher left_indicator_pub_;
+  ros::Publisher vis_spot_pub_;
+  ros::Publisher vis_pos_pub_;
 
   void odomCallback(const nav_msgs::Odometry &msg);
   void goalCB();
@@ -58,6 +61,11 @@ private:
   void initParkingSpot(const geometry_msgs::Polygon &msg);
   void blinkLeft(bool on);
   void blinkRight(bool on);
+  geometry_msgs::Point vecToPoint(const tf::Vector3 &vec);
+
+  void visualizeParkingSpot();
+  void visualizePosition();
+  void visualizeTrajectory();
 
   enum Parking_State
   {
@@ -103,4 +111,5 @@ private:
   float odom_to_laser_;
   float max_turn_;
   float idle_time_;
+  bool visualize_;
 };

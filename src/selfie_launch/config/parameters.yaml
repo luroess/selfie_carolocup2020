@@ -109,11 +109,11 @@ starting_procedure:
     starting_speed: 2.0
   }
 intersection_server_node:
-{
+  {
   distance_to_intersection: 0.7,
   road_width: 0.95,
   point_min_y: -3,
   point_max_y: 3,
   stop_time: 3,
   speed_default: 1.0,
-}
+  }

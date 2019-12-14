@@ -40,6 +40,7 @@ void StartingProcedureAction::executeCB()
 
 void StartingProcedureAction::parkingButtonCB(const std_msgs::Empty &msg)
 {
+  result_.drive_mode = false;
   if (state_ == State::WAIT_BUTTON)
   {
     min_second_press_time_ = ros::Time::now() + debounce_duration_;
@@ -75,6 +76,7 @@ void StartingProcedureAction::parkingButtonCB(const std_msgs::Empty &msg)
 
 void StartingProcedureAction::obstacleButtonCB(const std_msgs::Empty &msg)
 {
+  result_.drive_mode = true;
   if (state_ == State::WAIT_BUTTON)
   {
     min_second_press_time_ = ros::Time::now() + debounce_duration_;

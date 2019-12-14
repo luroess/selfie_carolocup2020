@@ -33,6 +33,7 @@ as_(nh_, "park", false)
   ackermann_pub_ = nh_.advertise<ackermann_msgs::AckermannDriveStamped>(ackermann_topic_, 10);
   right_indicator_pub_ = nh_.advertise<std_msgs::Bool>("right_turn_indicator", 20);
   left_indicator_pub_ = nh_.advertise<std_msgs::Bool>("left_turn_indicator", 20);
+  h_ = 0.001;
   if(visualize_)
   {
     vis_spot_pub_ = nh_.advertise<visualization_msgs::Marker>("park_spot_visualization",1);
@@ -54,7 +55,8 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
     actual_back_parking_position_ = Position(actual_parking_position_, odom_to_back_);
     actual_front_parking_position_ = Position(actual_parking_position_, odom_to_front_);
 
-    visualizePosition();
+    if(visualize_) visualizePosition();
+
     switch (parking_state_)
     {
       case go_to_parking_spot:
@@ -63,6 +65,8 @@ void ParkService::odomCallback(const nav_msgs::Odometry &msg)
         {
           parking_state_ = going_in;
           leaving_target_ = actual_parking_position_.y_;
+          initializeTrajectory(actual_back_parking_position_.x_,front_wall_-0.5, actual_back_parking_position_.y_, middle_of_parking_spot_y_);
+          if(visualize_) visualizeTrajectory();
         }
         if (state_msgs_) ROS_INFO_THROTTLE(5, "go_to_parking_spot");
         blinkRight(true);
@@ -172,9 +176,10 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
   front_wall_ = tr.x() < br.x() ? tr.x() : br.x();
   middle_of_parking_spot_x_ = (front_wall_ - back_wall_) / 2.0;
   mid_y_ = middle_of_parking_spot_y_ + (leaving_target_ - middle_of_parking_spot_y_) / 2.0;
-  initializeTrajectory(actual_back_parking_position_.x_, front_wall_ - 0.05, actual_back_parking_position_.y_, middle_of_parking_spot_y_);
-  visualizeParkingSpot();
-  visualizeTrajectory();
+  if(visualize_)
+  {
+    visualizeParkingSpot();
+  }
 }
 
 void ParkService::goalCB()
@@ -222,42 +227,18 @@ bool ParkService::toParkingSpot()
 
 bool ParkService::park()
 {
-  switch (move_state_)
+  if(actual_back_parking_position_.x_>=x1_)
   {
-    case first_phase:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  1st phase");
-      drive(parking_speed_, -max_turn_);
-      if (actual_parking_position_.rot_ < -max_rot_)
-      {
-        move_state_ = straight;
-      }
-      if (actual_parking_position_.y_ < mid_y_)
-      {
-        move_state_ = second_phase;
-      }
-      break;
-
-    case straight:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  straight");
-      drive(parking_speed_, 0.0);
-      if (actual_parking_position_.y_ < dist_turn_ + middle_of_parking_spot_y_)
-      {
-        move_state_ = second_phase;
-      }
-      break;
-
-    case second_phase:
-      if (state_msgs_) ROS_INFO_THROTTLE(5, "  2nd phase");
-      drive(parking_speed_, max_turn_);
-      if (actual_parking_position_.rot_ > 0.0 ||
-          (actual_front_parking_position_.x_ > front_wall_ - max_distance_to_wall_))
-      {
-        move_state_ = first_phase;
-        return true;
-      }
-      break;
+    drive(0,0);
+    return true;
   }
-  return false;
+  else
+  {
+    Position act_front_pos_target = frontTrajectoryPoint(actual_back_parking_position_.x_,0.5);
+    double act_rot_target = atan(trajectoryDeri(actual_back_parking_position_.x_));
+    drive(0.5,act_front_pos_target.rot_ - act_rot_target);
+  }
+  
 }
 
 bool ParkService::leave()
@@ -390,7 +371,7 @@ void ParkService::visualizeTrajectory()
   markerFront.type = visualization_msgs::Marker::LINE_STRIP;
   for(double x = x0_;x<=x1_;x+=0.01)
   {
-    Position front_pos = frontTrajectoryPoint(x,0.3);
+    Position front_pos = frontTrajectoryPoint(x,0.5);
     tf::Vector3 v = parking_spot_position_.transform_*tf::Vector3(front_pos.x_,front_pos.y_,0.);
     markerFront.points.push_back(vecToPoint(v));
   }
@@ -418,7 +399,7 @@ double ParkService::trajectoryPoint(double x)
 
 double ParkService::trajectoryDeri(double x)
 {
-  return -((y0_-y1_)/2.)*sin(PI * (x-x0_)/x1_-x0_)*(PI/(x1_-x0_));
+  return -((y0_-y1_)/2.)*sin(PI * (x-x0_)/(x1_-x0_))*(PI/(x1_-x0_));
 }
 
 ParkService::Position ParkService::frontTrajectoryPoint(double x, double length)

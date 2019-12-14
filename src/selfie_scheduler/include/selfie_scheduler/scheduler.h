@@ -52,6 +52,7 @@ class Scheduler
     void stopAction();
 
     void setAvoidingObstActive();
+    void setAvoidingObstPassive();
     void resetLaneControl();
     void resetVision();
     void stopCmdCreator();

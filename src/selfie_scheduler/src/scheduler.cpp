@@ -140,6 +140,11 @@ void Scheduler::setAvoidingObstActive()
     std_srvs::Empty empty_msg;
     avoidingObstSetActive_.call(empty_msg);
 }
+void Scheduler::setAvoidingObstPassive()
+{
+    std_srvs::Empty empty_msg;
+    avoidingObstSetPassive_.call(empty_msg);
+}
 void Scheduler::resetLaneControl()
 {
     std_srvs::Empty empty_msg;
@@ -181,6 +186,7 @@ void Scheduler::shiftAction()
     }
     else if (checkCurrentClientType<DriveClient*>())
     {
+        setAvoidingObstPassive();
         startNextAction();
     }
     else if (checkCurrentClientType<SearchClient*>())
@@ -196,6 +202,7 @@ void Scheduler::shiftAction()
     }
     else if (checkCurrentClientType<IntersectionClient*>())
     {
+        setAvoidingObstActive();
         startNextAction();
     }
     else

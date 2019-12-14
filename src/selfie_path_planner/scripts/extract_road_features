@@ -94,7 +94,6 @@ def max_speed_callback(msg):
 def act_speed_callback(msg):
     global act_speed
     act_speed = sma_act_speed.process(msg.data)
-    speed_filtered_pub.publish(act_speed)
 
 def set_if_reconfigured(config):
     for it in config.keys():
@@ -152,7 +151,7 @@ if __name__ == '__main__':
     sma = StreamingMovingAverage(window_size)
 
     global sma_act_speed
-    sma_act_speed = StreamingMovingAverage(20)
+    sma_act_speed = StreamingMovingAverage(50)
 
     global heading_offset_pub, position_offset_pub, curvature_pub
     heading_offset_pub = rospy.Publisher(
@@ -160,6 +159,5 @@ if __name__ == '__main__':
     position_offset_pub = rospy.Publisher(
         'position_offset', Float64, queue_size=1)
     speed_pub = rospy.Publisher('speed', Float64, queue_size=1)
-    speed_filtered_pub = rospy.Publisher('stm32/speed_filtered', Float32, queue_size=1)
 
     rospy.spin()

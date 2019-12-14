@@ -37,6 +37,8 @@ as_(nh_, "park", false)
   {
     vis_spot_pub_ = nh_.advertise<visualization_msgs::Marker>("park_spot_visualization",1);
     vis_pos_pub_ = nh_.advertise<visualization_msgs::Marker>("park_pos_visualization",1);
+    vis_traj_pub_ = nh_.advertise<visualization_msgs::Marker>("park_traj_visualization",1);
+    vis_traj_front_pub_ = nh_.advertise<visualization_msgs::Marker>("park_traj_front_visualization",1);
   }
 
 }
@@ -151,6 +153,8 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
   parking_spot_position_ = Position(bl.x(), bl.y(), atan2(br.y() - bl.y(), br.x() - bl.x()));
   actual_parking_position_ = Position(parking_spot_position_.transform_.inverse() * actual_odom_position_.transform_);
   Position actual_laser_parking_position = Position(actual_parking_position_, odom_to_laser_);
+  actual_back_parking_position_ = Position(actual_parking_position_, odom_to_back_);
+  actual_front_parking_position_ = Position(actual_parking_position_, odom_to_front_);
   std::vector <tf::Vector3> parking_parking_spot;
   for (std::vector<geometry_msgs::Point32>::const_iterator it = msg.points.begin(); it < msg.points.end(); it++)
   {
@@ -168,7 +172,9 @@ void ParkService::initParkingSpot(const geometry_msgs::Polygon &msg)
   front_wall_ = tr.x() < br.x() ? tr.x() : br.x();
   middle_of_parking_spot_x_ = (front_wall_ - back_wall_) / 2.0;
   mid_y_ = middle_of_parking_spot_y_ + (leaving_target_ - middle_of_parking_spot_y_) / 2.0;
+  initializeTrajectory(actual_back_parking_position_.x_, front_wall_ - 0.05, actual_back_parking_position_.y_, middle_of_parking_spot_y_);
   visualizeParkingSpot();
+  visualizeTrajectory();
 }
 
 void ParkService::goalCB()
@@ -302,21 +308,21 @@ void ParkService::visualizeParkingSpot()
   marker.ns = "park_parking_spot";
   marker.type = visualization_msgs::Marker::LINE_STRIP;
   marker.action = visualization_msgs::Marker::ADD;
-  tf::Vector3 v = parking_spot_position_.transform_* tf::Vector3(back_wall_,-(parking_spot_width_/2.),0.);
+  tf::Vector3 v = parking_spot_position_.transform_* tf::Vector3(back_wall_,0.,0.);
   geometry_msgs::Point point, first;
   point = vecToPoint(v);
   first = point;
   marker.points.push_back(point);
 
-  v = parking_spot_position_.transform_* tf::Vector3(front_wall_,-(parking_spot_width_/2.),0.);
+  v = parking_spot_position_.transform_* tf::Vector3(front_wall_,0.,0.);
   point = vecToPoint(v);
   marker.points.push_back(point);
 
-  v = parking_spot_position_.transform_* tf::Vector3(front_wall_,(parking_spot_width_/2.),0.);
+  v = parking_spot_position_.transform_* tf::Vector3(front_wall_,(parking_spot_width_),0.);
   point = vecToPoint(v);
   marker.points.push_back(point);
 
-  v = parking_spot_position_.transform_* tf::Vector3(back_wall_,(parking_spot_width_/2.),0.);
+  v = parking_spot_position_.transform_* tf::Vector3(back_wall_,(parking_spot_width_),0.);
   point = vecToPoint(v);
   marker.points.push_back(point);
   marker.points.push_back(first);
@@ -354,6 +360,76 @@ void ParkService::visualizePosition()
   marker.scale.y = 0.15;
   marker.scale.z = 0.15;
   vis_pos_pub_.publish(marker);
+}
+
+void ParkService::visualizeTrajectory()
+{
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = "odom";
+  marker.ns = "park_trajectory";
+  marker.header.stamp = ros::Time::now();
+  marker.type = visualization_msgs::Marker::LINE_STRIP;
+  for(double x = x0_;x<=x1_;x+=0.01)
+  {
+    tf::Vector3 v = parking_spot_position_.transform_*tf::Vector3(x,trajectoryPoint(x),0.);
+    marker.points.push_back(vecToPoint(v));
+
+  }
+  marker.color.a = 1.;
+  marker.color.r = 1.;
+  marker.color.g = 0.573;
+  marker.color.b = 0.70686;
+
+  marker.scale.x = 0.01;
+  vis_traj_pub_.publish(marker);
+
+  visualization_msgs::Marker markerFront;
+  markerFront.header.frame_id = "odom";
+  markerFront.ns = "park_trajectory_front";
+  markerFront.header.stamp = ros::Time::now();
+  markerFront.type = visualization_msgs::Marker::LINE_STRIP;
+  for(double x = x0_;x<=x1_;x+=0.01)
+  {
+    Position front_pos = frontTrajectoryPoint(x,0.3);
+    tf::Vector3 v = parking_spot_position_.transform_*tf::Vector3(front_pos.x_,front_pos.y_,0.);
+    markerFront.points.push_back(vecToPoint(v));
+  }
+  markerFront.color.a = 1.;
+  markerFront.color.r = 0.9;
+  markerFront.color.g = 0.;
+  markerFront.color.b = 0.;
+
+  markerFront.scale.x = 0.04;
+  vis_traj_front_pub_.publish(markerFront);
+}
+
+void ParkService::initializeTrajectory(double x0, double x1, double y0, double y1)
+{
+  x0_ = x0;
+  x1_ = x1;
+  y0_ = y0;
+  y1_ = y1;
+}
+
+double ParkService::trajectoryPoint(double x)
+{
+  return ((y0_-y1_)/2.)*cos(PI * (x-x0_)/(x1_-x0_)) + (y1_+y0_)/2.;
+}
+
+double ParkService::trajectoryDeri(double x)
+{
+  return -((y0_-y1_)/2.)*sin(PI * (x-x0_)/x1_-x0_)*(PI/(x1_-x0_));
+}
+
+ParkService::Position ParkService::frontTrajectoryPoint(double x, double length)
+{
+  double x2 = x + length*cos(atan(trajectoryDeri(x)));
+  double y2 = trajectoryPoint(x) + length*sin(atan(trajectoryDeri(x)));
+  double x3 = x+h_ + length*cos(atan(trajectoryDeri(x+h_)));
+  double y3 = trajectoryPoint(x+h_) + length*sin(atan(trajectoryDeri(x+h_)));
+  double deri = (y3 - y2)/(x3-x2);
+  double rot = atan(deri);
+  return Position(x2,y2,rot);
 }
 
 

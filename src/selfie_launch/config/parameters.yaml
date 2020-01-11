@@ -26,28 +26,28 @@ detect_parking_spot:
   }
 extract_road_features: 
   {
-    lookahead: 0.5,
+    lookahead: 0.7,
     min_speed: 2.0,
-    max_acceleration: 1.0,
-    max_deceleration: 1.5,
+    max_acceleration: 100.0,
+    max_deceleration: 100.0,
     max_curvature: 1.8,
     average_window_size: 10
   }
 free_drive: 
   {
-    max_speed: 5.0,
-    starting_line_distance_to_end: 0.6,
-    intersection_distance_to_end: 0.008
+    max_speed: 3.0,
+    starting_line_distance_to_end: 0.7,
+    intersection_distance_to_end: 1.3
   }
 lane_controller:
   {
-    right_lane_setpoint: -0.22,
+    right_lane_setpoint: -0.2,
     left_lane_setpoint: 0.18,
 
-    maximum_speed: 2.0,
-    safe_speed: 0.8,
+    maximum_speed: 3.0,
+    safe_speed: 1.0,
     maximum_length_of_obstacle: 0.4,
-    maximum_distance_to_obstacle: 0.8,
+    maximum_distance_to_obstacle: 0.9,
     safety_margin: 1.0,
     pos_tolerance: 0.01,
     num_proof_to_overtake: 3,
@@ -80,12 +80,12 @@ park_server:
   }
 intersection_server_node: 
   {
-    distance_to_intersection: 0.7,
+    distance_to_intersection: 0.65,
     road_width: 0.95,
     point_min_y: -1.5,
     point_max_y: 1.5,
     stop_time: 3,
-    speed_default: 0.3,
+    speed_default: 1.0,
   }
 pid_controller: 
   {

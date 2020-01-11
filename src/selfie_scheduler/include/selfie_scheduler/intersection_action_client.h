@@ -9,6 +9,7 @@ class IntersectionClient : public ClientInterface
 protected:
     actionlib::SimpleActionClient<selfie_msgs::intersectionAction> ac_;
     selfie_msgs::intersectionGoal goal_;
+    ros::ServiceClient avoidingObstSetActive_;
     bool result_;
 public:
     IntersectionClient(std::string name);

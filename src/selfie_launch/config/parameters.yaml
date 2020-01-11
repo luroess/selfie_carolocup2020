@@ -80,7 +80,7 @@ park_server:
   }
 intersection_server_node: 
   {
-    distance_to_intersection: 0.65,
+    distance_to_intersection: 0.7,
     road_width: 0.95,
     point_min_y: -1.5,
     point_max_y: 1.5,

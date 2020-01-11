@@ -176,19 +176,36 @@ void Scheduler::setParkSteeringMode()
 {   
     std_srvs::Empty empty_msg;
     if(parking_steering_mode_)
+    {
         steeringModeSetParallel_.call(empty_msg);
+        ROS_INFO("Changed PARK steering mode to PARALLEL");
+    }
     else
+    {
         steeringModeSetAckermann_.call(empty_msg);
+        ROS_INFO("Changed PARK steering mode to ACKERMANN");
+    }
+        
 }
 void Scheduler::setDriveSteeringMode()
 {   
     std_srvs::Empty empty_msg;
     if(drive_steering_mode_ == PARALLEL)
+    {
         steeringModeSetParallel_.call(empty_msg);
+        ROS_INFO("Changed drive steering mode to PARALLEL");
+    }
     else if(drive_steering_mode_ == ACKERMANN)
+    {
         steeringModeSetAckermann_.call(empty_msg);
+        ROS_INFO("Changed drive steering mode to ACKERMANN");
+    }
     else if(drive_steering_mode_ == FRONT_AXIS)
+    {
         steeringModeSetFrontAxis_.call(empty_msg);
+        ROS_INFO("Changed drive steering mode to FRONT AXIS");
+    }
+
 }
 template <typename T>
 bool Scheduler::checkCurrentClientType()

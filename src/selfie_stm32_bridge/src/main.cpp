@@ -75,7 +75,8 @@ void ackermanCallback(const ackermann_msgs::AckermannDriveStamped::ConstPtr& msg
     sub_messages.ackerman.steering_angle_front = -msg->drive.steering_angle;
     if(steering_mode == 1)
     {
-        sub_messages.ackerman.steering_angle_back = -msg->drive.steering_angle;
+        sub_messages.ackerman.steering_angle_front = msg->drive.steering_angle;
+        sub_messages.ackerman.steering_angle_back = msg->drive.steering_angle;
     }
     else if(steering_mode == 0)
     {
